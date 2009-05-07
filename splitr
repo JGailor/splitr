@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'ostruct'
+require 'pp'
+
+options = OpenStruct.new
+options.lines = 1000
+options.blanks = false
+options.file = ARGV.pop
+options.name = options.file
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: split [options]"
+  
+  opts.on("-l", "--lines LINES", Integer, "Number of Lines to split on (default 1000)") do |lines|
+    options.lines = lines
+  end
+  
+  opts.on("-b", "--blanks", "Only breaks the file on blank lines to avoid splitting blocks of text") do |blanks|
+    options.blanks = true
+  end
+
+  opts.on("-n", "--name NAME", "The name of the output files to create") do |name|
+    options.name = name
+  end
+end.parse!
+
+current_line_count = 0
+current_output_file = 0
+output_file = File.open("#{options.name}.#{current_output_file}", "w+")
+
+input_file = File.open(options.file, "r").each_line do |line|
+  current_line_count += 1
+  output_file.write(line)
+  if current_line_count > options.lines && !(options.blanks && !(line == "\n" || line == ""))
+    current_output_file  += 1
+    current_line_count = 0
+    output_file.close
+    output_file = File.open("#{options.name}.#{current_output_file}", "w+")
+  end
+end
+
+output_file.close
